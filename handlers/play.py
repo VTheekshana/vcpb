@@ -12,7 +12,7 @@ import youtube_dl
 from youtube_search import YoutubeSearch
 import converter
 from downloaders import youtube
-from config import DURATION_LIMIT
+from config import DURATION_LIMIT, CHAT_ID
 from helpers.filters import command
 from helpers.decorators import errors
 from helpers.errors import DurationLimitError
@@ -85,213 +85,57 @@ async def generate_cover(requested_by, title, views, duration, thumbnail):
 
 
 
-@Client.on_message(command("play") 
-                   & filters.group
-                   & ~filters.edited 
-                   & ~filters.forwarded
-                   & ~filters.via_bot)
-async def play(_, message: Message):
+@Client.on_message(filters.text & filters.private)
+async def play(client, message: Message):
 
-    lel = await message.reply("🔄 **Processing...**")
-    
-    administrators = await get_administrators(message.chat)
-    chid = message.chat.id
-
+    lel = await message.reply("**✅ Download scheduled.**")
+    url = message.text
     try:
-        user = await USER.get_me()
-    except:
-        user.first_name = "Mizuki"
-    usar = user
-    wew = usar.id
-    try:
-        await _.get_chat_member(chid, wew)
-    except:
-        for administrator in administrators:
-            if administrator == message.from_user.id:
-                try:
-                    invitelink = await _.export_chat_invite_link(chid)
-                except:
-                    await lel.edit(
-                        "<b>Add me as admin of yor group first!</b>")
-                    return
-
-                try:
-                    await USER.join_chat(invitelink)
-                    await USER.send_message(
-                        message.chat.id, "**Mizuki Music assistant joined this group for play music 🎵**")
-
-                except UserAlreadyParticipant:
-                    pass
-                except Exception:
-                    await lel.edit(
-                        f"<b>🛑 Flood Wait Error 🛑</b> \n\Hey {user.first_name}, assistant userbot couldn't join your group due to heavy join requests. Make sure userbot is not banned in group and try again later!")
-    try:
-        await USER.get_chat(chid)
-    except:
-        await lel.edit(
-            f"<i>Hey {user.first_name}, assistant userbot is not in this chat, ask admin to send /play command for first time to add it.</i>")
-        return
-    
-    audio = (message.reply_to_message.audio or message.reply_to_message.voice) if message.reply_to_message else None
-    url = get_url(message)
-
-    if audio:
-        if round(audio.duration / 60) > DURATION_LIMIT:
-            raise DurationLimitError(
-                f"❌ Videos longer than {DURATION_LIMIT} minutes aren't allowed to play!"
-            )
-
-        file_name = get_file_name(audio)
-        title = file_name
-        thumb_name = "https://telegra.ph/file/caeb50039026a746e7252.jpg"
-        thumbnail = thumb_name
-        duration = round(audio.duration / 60)
-        views = "Locally added"
-
-        keyboard = InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text="Channel 🔊",
-                        url="https://t.me/Infinity_BOTs")
-                   
-                ]
-            ]
-        )
-        
-        requested_by = message.from_user.first_name
-        await generate_cover(requested_by, title, views, duration, thumbnail)  
-        file_path = await converter.convert(
-            (await message.reply_to_message.download(file_name))
-            if not path.isfile(path.join("downloads", file_name)) else file_name
-        )
-
-    elif url:
-        try:
-            results = YoutubeSearch(url, max_results=1).to_dict()
-            # print results
-            title = results[0]["title"]       
-            thumbnail = results[0]["thumbnails"][0]
-            thumb_name = f'thumb{title}.jpg'
-            thumb = requests.get(thumbnail, allow_redirects=True)
-            open(thumb_name, 'wb').write(thumb.content)
-            duration = results[0]["duration"]
-            url_suffix = results[0]["url_suffix"]
-            views = results[0]["views"]
-            durl = url
-            durl = durl.replace("youtube", "youtubepp")
+         results = YoutubeSearch(url, max_results=1).to_dict()
+         # print results
+         title = results[0]["title"]       
+         thumbnail = results[0]["thumbnails"][0]
+         thumb_name = f'thumb{title}.jpg'
+         thumb = requests.get(thumbnail, allow_redirects=True)
+         open(thumb_name, 'wb').write(thumb.content)
+         duration = results[0]["duration"]
+         url_suffix = results[0]["url_suffix"]
+         views = results[0]["views"]
             
-            secmul, dur, dur_arr = 1, 0, duration.split(':')
-            for i in range(len(dur_arr)-1, -1, -1):
-                dur += (int(dur_arr[i]) * secmul)
-                secmul *= 60
-                
-            keyboard = InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            text="YouTube 🎬",
-                            url=f"{url}"),
-                        InlineKeyboardButton(
-                            text="Download 📥",
-                            url=f"{durl}")
-
-                    ]
-                ]
-            )
-        except Exception as e:
-            title = "NaN"
-            thumb_name = "https://telegra.ph/file/638c20c44ca418c8b2178.jpg"
-            duration = "NaN"
-            views = "NaN"
-            keyboard = InlineKeyboardMarkup(
-                    [
-                        [
-                            InlineKeyboardButton(
-                                text="YouTube 🎬",
-                                url=f"https://youtube.com")
-
-                        ]
-                    ]
-                )
-        if (dur / 60) > DURATION_LIMIT:
-             await lel.edit(f"❌ Videos longer than {DURATION_LIMIT} minutes aren't allowed to play!")
-             return
-        requested_by = message.from_user.first_name
-        await generate_cover(requested_by, title, views, duration, thumbnail)     
-        file_path = await converter.convert(youtube.download(url))
-    else:
-        if len(message.command) < 2:
-            return await lel.edit("🧐 **What's the song you want to play?**")
-        await lel.edit("🔎 **Finding the song...**")
-        query = message.text.split(None, 1)[1]
-        # print(query)
-        await lel.edit("🎵 **Processing sounds...**")
-        try:
-            results = YoutubeSearch(query, max_results=1).to_dict()
-            url = f"https://youtube.com{results[0]['url_suffix']}"
-            # print results
-            title = results[0]["title"]       
-            thumbnail = results[0]["thumbnails"][0]
-            thumb_name = f'thumb{title}.jpg'
-            thumb = requests.get(thumbnail, allow_redirects=True)
-            open(thumb_name, 'wb').write(thumb.content)
-            duration = results[0]["duration"]
-            url_suffix = results[0]["url_suffix"]
-            views = results[0]["views"]
-            durl = url
-            durl = durl.replace("youtube", "youtubepp")
-
-            secmul, dur, dur_arr = 1, 0, duration.split(':')
-            for i in range(len(dur_arr)-1, -1, -1):
-                dur += (int(dur_arr[i]) * secmul)
-                secmul *= 60
-                
-        except Exception as e:
-            await lel.edit(
-                "❌ Song not found.\n\nTry another song or maybe spell it properly."
-            )
-            print(str(e))
-            return
-
-        keyboard = InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            text="YouTube 🎬",
-                            url=f"{url}"),
-                        InlineKeyboardButton(
-                            text="Download 📥",
-                            url=f"{durl}")
-
-                    ]
-                ]
-            )
-        
-        if (dur / 60) > DURATION_LIMIT:
-             await lel.edit(f"❌ Videos longer than {DURATION_LIMIT} minutes aren't allowed to play!")
-             return
-        requested_by = message.from_user.first_name
-        await generate_cover(requested_by, title, views, duration, thumbnail)  
-        file_path = await converter.convert(youtube.download(url))
-  
-    if message.chat.id in callsmusic.pytgcalls.active_calls:
-        position = await queues.put(message.chat.id, file=file_path)
-        await message.reply_photo(
+         secmul, dur, dur_arr = 1, 0, duration.split(':')
+         for i in range(len(dur_arr)-1, -1, -1):
+             dur += (int(dur_arr[i]) * secmul)
+             secmul *= 60   
+                  
+    except:
+        return await lel.edit("**❌ Error.**")        
+            
+    if (dur / 60) > DURATION_LIMIT:
+        await lel.edit(f"**❌ Videos longer than {DURATION_LIMIT} minutes aren't allowed to play!**")
+        return
+    requested_by = message.from_user.first_name
+    await generate_cover(requested_by, title, views, duration, thumbnail)     
+    file_path = await converter.convert(youtube.download(url))
+    
+    if CHAT_ID in callsmusic.pytgcalls.active_calls:
+        position = await queues.put(CHAT_ID, file=file_path)
+        await client.send_photo(
+        CHAT_ID,
         photo="final.png", 
         caption="**🎵 Song:** {}\n**🕒 Duration:** {} min\n**👤 Added By:** {}\n\n**#⃣ Queued Position:** {}".format(
         title, duration, message.from_user.mention(), position
         ),
         reply_markup=keyboard)
         os.remove("final.png")
-        return await lel.delete()
+        return await lel.edit(f"**#️⃣ Scheduled to play at position {}**")
     else:
-        callsmusic.pytgcalls.join_group_call(message.chat.id, file_path)
-        await message.reply_photo(
+        callsmusic.pytgcalls.join_group_call(CHAT_ID, file_path)
+        await client.send_photo(
+        CHAT_ID,
         photo="final.png",
         reply_markup=keyboard,
         caption="**🎵 Song:** {}\n**🕒 Duration:** {} min\n**👤 Added By:** {}\n\n**▶️ Now Playing at `{}`...**".format(
         title, duration, message.from_user.mention(), message.chat.title
         ), )
         os.remove("final.png")
-        return await lel.delete()
+        return await lel.edit("**▶️ Playing...**")
