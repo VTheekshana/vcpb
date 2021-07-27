@@ -4,14 +4,13 @@ from pyrogram import Client
 from pyrogram.types import Message
 from callsmusic import callsmusic
 
-from config import CHAT_ID
+from config import CHAT_ID, SUDO_USERS
 from helpers.filters import command, other_filters
-from helpers.decorators import errors, authorized_users_only
+from helpers.decorators import errors
 
 
-@Client.on_message(command("pause") & other_filters)
+@Client.on_message(command("pause") & filters.private & filters.user(SUDO_USERS))
 @errors
-@authorized_users_only
 async def pause(_, message: Message):
     if (
             CHAT_ID not in callsmusic.pytgcalls.active_calls
@@ -24,9 +23,8 @@ async def pause(_, message: Message):
         await message.reply_text("**▶️ Paused!**")
 
 
-@Client.on_message(command("resume") & other_filters)
+@Client.on_message(command("resume") & filters.private & filters.user(SUDO_USERS))
 @errors
-@authorized_users_only
 async def resume(_, message: Message):
     if (
             CHAT_ID not in callsmusic.pytgcalls.active_calls
@@ -39,9 +37,8 @@ async def resume(_, message: Message):
         await message.reply_text("**⏸ Resumed!**")
 
 
-@Client.on_message(command("end") & other_filters)
+@Client.on_message(command("end") & filters.private & filters.user(SUDO_USERS))
 @errors
-@authorized_users_only
 async def stop(_, message: Message):
     if CHAT_ID not in callsmusic.pytgcalls.active_calls:
         await message.reply_text("**❗ Nothing is streaming!**")
@@ -55,9 +52,8 @@ async def stop(_, message: Message):
         await message.reply_text("**❌ Stopped streaming!**")
 
 
-@Client.on_message(command("skip") & other_filters)
+@Client.on_message(command("skip") & filters.private & filters.user(SUDO_USERS))
 @errors
-@authorized_users_only
 async def skip(_, message: Message):
     if CHAT_ID not in callsmusic.pytgcalls.active_calls:
         await message.reply_text("**❗ Nothing is playing to skip!**")
