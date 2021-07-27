@@ -128,7 +128,7 @@ async def play(client, message: Message):
         ),
         reply_markup=keyboard)
         os.remove("final.png")
-        return await lel.edit(f"**#️⃣ Scheduled to play at position {}**")
+        return await lel.edit(f"**#️⃣ Scheduled to play at position {position}**")
     else:
         callsmusic.pytgcalls.join_group_call(CHAT_ID, file_path)
         await client.send_photo(
