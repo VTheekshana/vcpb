@@ -4,7 +4,7 @@ from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
 @Client.on_message(filters.command("start") & filters.private)
 async def start(_, message: Message):
-     await message.reply_text("**✨ Join @InfinityJE**")
+     await message.reply_text("**HI I'm Group Music Player Made By @ImTheekshana**")
 
 @Client.on_message(filters.command("start") & ~filters.private & ~filters.channel)
 async def gstart(_, message: Message):
