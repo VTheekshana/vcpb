@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
 
-@Client.on_message(filters.command(start) & filters.private)
+@Client.on_message(filters.command("start") & filters.private)
 async def start(_, message: Message):
      await message.reply_text("**✨ Join @InfinityJE**")
 
