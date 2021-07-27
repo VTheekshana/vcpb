@@ -87,9 +87,11 @@ async def generate_cover(requested_by, title, views, duration, thumbnail):
 
 @Client.on_message(filters.text & filters.private)
 async def play(client, message: Message):
-
+    input = message.text
+    if input.startswith("/"):
+       return
     lel = await message.reply("**✅ Download scheduled.**")
-    url = message.text
+    url = input
     try:
          results = YoutubeSearch(url, max_results=1).to_dict()
          # print results
